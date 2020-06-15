@@ -89,7 +89,7 @@ class InpaintApp(QWidget):
         self.mask_transform = transforms.ToTensor()
         self.device = torch.device("cpu")
 
-        model_dict = torch.load(self.cwd + "/model_e1_i56358.pth", map_location="cpu")
+        model_dict = torch.load(self.cwd + "/model/model_e2_i500.pth", map_location="cpu")
         model = PartialConvUNet()
         model.load_state_dict(model_dict["model"])
         model = model.to(self.device)

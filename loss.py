@@ -8,7 +8,7 @@ from torchvision import transforms
 from places2_train import Places2Data, MEAN, STDDEV
 from PIL import Image
 
-LAMBDAS = {"valid": 1.0, "hole": 6.0, "tv": 2.0, "perceptual": 0.05, "style": 240.0}
+LAMBDAS = {"valid": 1.0, "hole": 6.0, "tv": 0.1, "perceptual": 0.05, "style": 120.0}
 
 
 def gram_matrix(feature_matrix):
@@ -47,7 +47,7 @@ def style_loss(h_comp, h_out, h_gt, l1):
 # computes TV loss over entire composed image since gradient will not be passed backward to input
 def total_variation_loss(image, l1):
     # shift one pixel and get loss1 difference (for both x and y direction)
-    loss = l1(image[:, :, :, :-1] - image[:, :, :, 1:]) + l1(image[:, :, :-1, :] - image[:, :, 1:, :])
+    loss = l1(image[:, :, :, :-1], image[:, :, :, 1:]) + l1(image[:, :, :-1, :], image[:, :, 1:, :])
     return loss
 
 

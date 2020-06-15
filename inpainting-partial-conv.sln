@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.902
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "inpainting-partial-conv", "inpainting-partial-conv.pyproj", "{22D250FA-D5FE-4399-B2B8-9181C081D249}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{22D250FA-D5FE-4399-B2B8-9181C081D249}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22D250FA-D5FE-4399-B2B8-9181C081D249}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C53853DE-BC52-451D-A2E0-085DFF0F7C48}
+	EndGlobalSection
+EndGlobal
