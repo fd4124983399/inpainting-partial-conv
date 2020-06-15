@@ -6,3 +6,5 @@ mask/
 training_logs/
 __pycache__/
 model/
+mask.png
+test.jpg

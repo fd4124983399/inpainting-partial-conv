@@ -41,7 +41,7 @@ if __name__ == '__main__':
 	parser.add_argument("--lr", type=float, default=2e-4)
 	parser.add_argument("--fine_tune_lr", type=float, default=5e-5)
 	parser.add_argument("--batch_size", type=int, default=10)
-	parser.add_argument("--epochs", type=int, default=3)
+	parser.add_argument("--epochs", type=int, default=100)
 	parser.add_argument("--fine_tune", action="store_true")
 	parser.add_argument("--gpu", type=int, default=0)
 	parser.add_argument("--num_workers", type=int, default=16)
