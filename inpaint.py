@@ -30,14 +30,15 @@ def exceeds_bounds(y):
 
 class Drawer(QWidget):
     newPoint = pyqtSignal(QPoint)
-    def __init__(self, image_path, parent=None):
+    def __init__(self, image_path, image_shape, parent=None):
         QWidget.__init__(self, parent)
         self.path = QPainterPath()
         self.image_path = image_path
+        self.image_shape = image_shape
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.drawPixmap(QRect(0, 0, 256, 256), QPixmap(self.image_path))
+        painter.drawPixmap(QRect(0, 0, self.image_shape, self.image_shape), QPixmap(self.image_path))
 
         if (use_sr):
             return
@@ -62,7 +63,7 @@ class Drawer(QWidget):
         self.update()
 
     def sizeHint(self):
-        return QSize(256, 256)
+        return QSize(self.image_shape, self.image_shape)
 
     def resetPath(self):
         self.path = QPainterPath()
@@ -84,7 +85,7 @@ class InpaintApp(QWidget):
 
         self.save_path = self.cwd + "/test.jpg"
         self.open_and_save_img(image_path, self.save_path)
-        self.drawer = Drawer(self.save_path, self)
+        self.drawer = Drawer(self.save_path, self.img_shape, self)
 
         self.setWindowTitle(self.title)
         self.setGeometry(200, 200, self.width, self.height)
@@ -109,15 +110,16 @@ class InpaintApp(QWidget):
     def open_and_save_img(self, path, dest):
         img = Image.open(path)
         img.save(dest)
+        self.img_shape = img.height
 
     def inpaint(self):
         if (use_sr):
-            sr_mask_shape = (1,1,256,256)
+            sr_mask_shape = (1,1,self.img_shape,self.img_shape)
             sr_mask_gen = SRMaskGenerator(sr_mask_shape, self.device, 1, sr_rate, torch.float)
-            mask = sr_mask_gen.get_sr_mask3D()
+            mask = sr_mask_gen.get_sr_mask()
 
         else:
-            mask = QImage(256, 256, QImage.Format_RGB32)
+            mask = QImage(self.img_shape, self.img_shape, QImage.Format_RGB32)
             mask.fill(qRgb(255, 255, 255))
 
             painter = QPainter()
