@@ -41,13 +41,15 @@ if __name__ == '__main__':
 	parser.add_argument("--lr", type=float, default=2e-4)
 	parser.add_argument("--fine_tune_lr", type=float, default=5e-5)
 	parser.add_argument("--batch_size", type=int, default=10)
-	parser.add_argument("--epochs", type=int, default=100)
+	parser.add_argument("--epochs", type=int, default=10000)
 	parser.add_argument("--fine_tune", action="store_true")
 	parser.add_argument("--gpu", type=int, default=0)
 	parser.add_argument("--num_workers", type=int, default=16)
 	parser.add_argument("--log_interval", type=int, default=10)
 	parser.add_argument("--save_interval", type=int, default=5000)
 
+	parser.add_argument('--super_resolution', '--sr', dest='use_sr', action='store_true')
+	parser.add_argument('--sr_rate', type=int, default=4)
 	args = parser.parse_args()
 
 	cwd = os.getcwd()
@@ -97,6 +99,27 @@ if __name__ == '__main__':
 	loss_func = CalculateLoss().to(device)
 	print("Setup loss function...")
 
+	data_shape = data_train.__getitem__(0)[0].shape
+	assert(data_shape[1] % args.sr_rate == 0)
+
+	use_sr = args.use_sr
+	sr_rate = args.sr_rate
+	sr_mask_shape = (1,1,)
+	sr_mask_shape += data_shape[1:]
+
+	if (use_sr):
+		sr_mask = torch.zeros(sr_mask_shape, dtype=torch.int32)
+		index_h = 0
+		index_v = 0
+		while (index_v < data_shape[1]):
+			index_h = 0
+			while (index_h < data_shape[1]):
+				sr_mask[0][0][index_v][index_h] = 1
+				index_h += sr_rate
+			index_v += sr_rate
+
+		sr_mask = sr_mask.repeat(args.batch_size, 3, 1, 1)
+
 	# Resume training on model
 	if args.load_model:
 		assert os.path.isfile(cwd + args.save_dir + args.load_model)
@@ -136,9 +159,15 @@ if __name__ == '__main__':
 			
 			# Forward-propagates images through net
 			# Mask is also propagated, though it is usually gone by the decoding stage
-			output = model(image, mask)
 
-			loss_dict = loss_func(image, mask, output, gt)
+			if (use_sr):
+				output = model(image, sr_mask)
+				loss_dict = loss_func(image, sr_mask, output, gt)
+			else:
+				output = model(image, mask)
+				loss_dict = loss_func(image, mask, output, gt)
+
+
 			loss = 0.0
 
 			# sums up each loss value
