@@ -11,8 +11,6 @@ from loss import CalculateLoss
 from partial_conv_net import PartialConvUNet
 from places2_train import Places2Data
 
-from sr_mask_generator import SRMaskGenerator
-
 class SubsetSampler(data.sampler.Sampler):
 	def __init__(self, start_sample, num_samples):
 		self.num_samples = num_samples
@@ -69,7 +67,11 @@ if __name__ == '__main__':
 	else:
 		device = torch.device("cpu")
 
-	data_train = Places2Data(args.train_path, args.mask_path)
+	use_sr = args.use_sr
+	sr_rate = args.sr_rate
+
+	data_train = Places2Data(use_sr, sr_rate, args.train_path, args.mask_path)
+
 	data_size = len(data_train)
 	print("Loaded training dataset with {} samples and {} masks".format(data_size, data_train.num_masks))
 
@@ -102,15 +104,6 @@ if __name__ == '__main__':
 
 	data_shape = data_train.__getitem__(0)[0].shape
 	assert(data_shape[1] % args.sr_rate == 0)
-
-	use_sr = args.use_sr
-	sr_rate = args.sr_rate
-	sr_mask_shape = (1,1,)
-	sr_mask_shape += data_shape[1:]
-
-	if (use_sr):
-		sr_mask_gen = SRMaskGenerator(sr_mask_shape, device, args.batch_size, sr_rate, torch.float)
-		sr_mask = sr_mask_gen.get_sr_mask4D()
 
 	# Resume training on model
 	if args.load_model:
@@ -151,14 +144,8 @@ if __name__ == '__main__':
 			
 			# Forward-propagates images through net
 			# Mask is also propagated, though it is usually gone by the decoding stage
-
-			if (use_sr):
-				output = model(image, sr_mask)
-				loss_dict = loss_func(image, sr_mask, output, gt)
-			else:
-				output = model(image, mask)
-				loss_dict = loss_func(image, mask, output, gt)
-
+			output = model(image, mask)
+			loss_dict = loss_func(image, mask, output, gt)
 
 			loss = 0.0
 

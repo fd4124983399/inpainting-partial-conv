@@ -7,6 +7,8 @@ from PIL import Image
 from torchvision import transforms
 from torchvision import utils
 
+from sr_mask_generator import SRMaskGenerator
+
 # mean and std channel values for places2 dataset
 MEAN = [0.485, 0.456, 0.406]
 STDDEV = [0.229, 0.224, 0.225]
@@ -22,17 +24,26 @@ def unnormalize(x):
 
 class Places2Data (torch.utils.data.Dataset):
 
-	def __init__(self, path_to_data="/data_256", path_to_mask="/mask"):
+	def __init__(self, use_sr, sr_rate, path_to_data="/data_256", path_to_mask="/mask"):
 		super().__init__()
 
 		self.img_paths = glob.glob(os.path.dirname(os.path.abspath(__file__)) + path_to_data + "/**/*.jpg", recursive=True)
 		self.mask_paths = glob.glob(os.path.dirname(os.path.abspath(__file__)) + path_to_mask + "/*.png")
-		self.num_masks = len(self.mask_paths)
-		self.num_imgs = len(self.img_paths)
+		self.use_sr = use_sr
 
 		# normalizes the image: (img - MEAN) / STD and converts to tensor
 		self.img_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(MEAN, STDDEV)])
 		self.mask_transform = transforms.ToTensor()
+
+		if (use_sr):
+			sr_mask_shape = (1,)
+			sr_mask_shape += Image.open(self.img_paths[0]).size		
+			sr_mask_gen = SRMaskGenerator(sr_mask_shape, torch.device("cpu"), sr_rate, torch.float)
+			self.sr_mask = sr_mask_gen.get_sr_mask()
+			self.num_masks = 1
+		else:
+			self.num_masks = len(self.mask_paths)
+		self.num_imgs = len(self.img_paths)
 
 	def __len__(self):
 		return self.num_imgs
@@ -41,8 +52,11 @@ class Places2Data (torch.utils.data.Dataset):
 		gt_img = Image.open(self.img_paths[index])
 		gt_img = self.img_transform(gt_img.convert('RGB'))
 
-		mask = Image.open(self.mask_paths[random.randint(0, self.num_masks - 1)])
-		mask = self.mask_transform(mask.convert('RGB'))
+		if (self.use_sr):
+			mask = self.sr_mask
+		else:
+			mask = Image.open(self.mask_paths[random.randint(0, self.num_masks - 1)])
+			mask = self.mask_transform(mask.convert('RGB'))
 
 		return gt_img * mask, mask, gt_img
 
