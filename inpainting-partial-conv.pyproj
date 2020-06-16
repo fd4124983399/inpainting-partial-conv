@@ -24,6 +24,7 @@
     <Compile Include="loss.py" />
     <Compile Include="partial_conv_net.py" />
     <Compile Include="places2_train.py" />
+    <Compile Include="sr_mask_generator.py" />
     <Compile Include="test.py" />
     <Compile Include="train.py" />
   </ItemGroup>

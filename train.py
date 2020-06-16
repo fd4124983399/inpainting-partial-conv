@@ -11,6 +11,7 @@ from loss import CalculateLoss
 from partial_conv_net import PartialConvUNet
 from places2_train import Places2Data
 
+from sr_mask_generator import SRMaskGenerator
 
 class SubsetSampler(data.sampler.Sampler):
 	def __init__(self, start_sample, num_samples):
@@ -108,17 +109,8 @@ if __name__ == '__main__':
 	sr_mask_shape += data_shape[1:]
 
 	if (use_sr):
-		sr_mask = torch.zeros(sr_mask_shape, dtype=torch.float, device=device)
-		index_h = 0
-		index_v = 0
-		while (index_v < data_shape[1]):
-			index_h = 0
-			while (index_h < data_shape[1]):
-				sr_mask[0][0][index_v][index_h] = 1
-				index_h += sr_rate
-			index_v += sr_rate
-
-		sr_mask = sr_mask.repeat(args.batch_size, 3, 1, 1)
+		sr_mask_gen = SRMaskGenerator(sr_mask_shape, device, args.batch_size, sr_rate, torch.float)
+		sr_mask = sr_mask_gen.get_sr_mask4D()
 
 	# Resume training on model
 	if args.load_model:

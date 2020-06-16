@@ -20,6 +20,8 @@ from torchvision import transforms
 from partial_conv_net import PartialConvUNet
 from places2_train import unnormalize, MEAN, STDDEV
 
+from sr_mask_generator import SRMaskGenerator
+
 def exceeds_bounds(y):
     if y >= 250:
         return True
@@ -36,18 +38,23 @@ class Drawer(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.drawPixmap(QRect(0, 0, 256, 256), QPixmap(self.image_path))
+
+        if (use_sr):
+            return
         painter.setPen(QPen(Qt.black, 12))
         painter.drawPath(self.path)
 
     def mousePressEvent(self, event):
-        if exceeds_bounds(event.pos().y()):
+        if (exceeds_bounds(event.pos().y())
+            or use_sr):
             return
         
         self.path.moveTo(event.pos())
         self.update()
 
     def mouseMoveEvent(self, event):
-        if exceeds_bounds(event.pos().y()):
+        if (exceeds_bounds(event.pos().y())
+            or use_sr):
             return
         
         self.path.lineTo(event.pos())
@@ -89,7 +96,7 @@ class InpaintApp(QWidget):
         self.mask_transform = transforms.ToTensor()
         self.device = torch.device("cpu")
 
-        model_dict = torch.load(self.cwd + "/model/model_e2_i500.pth", map_location="cpu")
+        model_dict = torch.load(self.cwd + "/model/model_e330_i500.pth", map_location="cpu")
         model = PartialConvUNet()
         model.load_state_dict(model_dict["model"])
         model = model.to(self.device)
@@ -104,20 +111,27 @@ class InpaintApp(QWidget):
         img.save(dest)
 
     def inpaint(self):
-        mask = QImage(256, 256, QImage.Format_RGB32)
-        mask.fill(qRgb(255, 255, 255))
+        if (use_sr):
+            sr_mask_shape = (1,1,256,256)
+            sr_mask_gen = SRMaskGenerator(sr_mask_shape, self.device, 1, sr_rate, torch.float)
+            mask = sr_mask_gen.get_sr_mask3D()
 
-        painter = QPainter()
-        painter.begin(mask)
-        painter.setPen(QPen(Qt.black, 12))
-        painter.drawPath(self.drawer.path)
-        painter.end()
+        else:
+            mask = QImage(256, 256, QImage.Format_RGB32)
+            mask.fill(qRgb(255, 255, 255))
 
-        mask.save("mask.png", "png")
+            painter = QPainter()
+            painter.begin(mask)
+            painter.setPen(QPen(Qt.black, 12))
+            painter.drawPath(self.drawer.path)
+            painter.end()
 
-        # open image and normalize before forward pass
-        mask = Image.open(self.cwd + "/mask.png")
-        mask = self.mask_transform(mask.convert("RGB"))
+            mask.save("mask.png", "png")
+
+            # open image and normalize before forward pass
+            mask = Image.open(self.cwd + "/mask.png")
+            mask = self.mask_transform(mask.convert("RGB"))
+
         gt_img = Image.open(self.save_path)
         gt_img = self.img_transform(gt_img.convert("RGB"))
         img = gt_img * mask
@@ -141,8 +155,12 @@ class InpaintApp(QWidget):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--img", type=int, default=1)
+    parser.add_argument('--super_resolution', '--sr', dest='use_sr', action='store_true')
+    parser.add_argument('--sr_rate', type=int, default=4)
     args = parser.parse_args()
 
+    use_sr = args.use_sr
+    sr_rate = args.sr_rate
     app = QApplication(sys.argv)
     ex = InpaintApp(args.img)
     sys.exit(app.exec_())
