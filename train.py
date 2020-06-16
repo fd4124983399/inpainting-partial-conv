@@ -108,7 +108,7 @@ if __name__ == '__main__':
 	sr_mask_shape += data_shape[1:]
 
 	if (use_sr):
-		sr_mask = torch.zeros(sr_mask_shape, dtype=torch.int32)
+		sr_mask = torch.zeros(sr_mask_shape, dtype=torch.float, device=device)
 		index_h = 0
 		index_v = 0
 		while (index_v < data_shape[1]):
