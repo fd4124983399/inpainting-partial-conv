@@ -29,12 +29,12 @@ def requires_grad(param):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--train_path", type=str, default="/data_256")
-	parser.add_argument("--mask_path", type=str, default="/mask")
-	parser.add_argument("--val_path", type=str, default="/val_256")
+	parser.add_argument("--train_path", type=str, default="/data_256/")
+	parser.add_argument("--mask_path", type=str, default="/mask/")
+	parser.add_argument("--val_path", type=str, default="/val_256/")
 
-	parser.add_argument("--log_dir", type=str, default="/training_logs")
-	parser.add_argument("--save_dir", type=str, default="/model")
+	parser.add_argument("--log_dir", type=str, default="/training_logs/")
+	parser.add_argument("--save_dir", type=str, default="/model/")
 	parser.add_argument("--load_model", type=str)
 
 	parser.add_argument("--lr", type=float, default=2e-4)
@@ -48,7 +48,7 @@ if __name__ == '__main__':
 	parser.add_argument("--save_interval", type=int, default=5000)
 
 	parser.add_argument('--super_resolution', '--sr', dest='use_sr', action='store_true')
-	parser.add_argument('--sr_rate', type=int, default=4)
+	parser.add_argument('--sr_rate', type=int, default=2)
 	args = parser.parse_args()
 
 	cwd = os.getcwd()
@@ -165,7 +165,12 @@ if __name__ == '__main__':
 
 			# Save model
 			if (i + 1) % args.save_interval == 0 or (i + 1) == iters_per_epoch:
-				filename = cwd + args.save_dir + "/model_e{}_i{}.pth".format(epoch, i + 1)
+				filename = cwd + args.save_dir
+				if (use_sr):
+					filename += "/sr"
+				else:
+					filename += "/irregular"
+				filename += "/model_e{}_i{}.pth".format(epoch, i + 1)
 				state = {"model": model.state_dict(), "optimizer": optimizer.state_dict()}
 				torch.save(state, filename)
 
