@@ -30,15 +30,15 @@ def exceeds_bounds(y):
 
 class Drawer(QWidget):
     newPoint = pyqtSignal(QPoint)
-    def __init__(self, image_path, image_shape, parent=None):
+    def __init__(self, image_path, image_size, parent=None):
         QWidget.__init__(self, parent)
         self.path = QPainterPath()
         self.image_path = image_path
-        self.image_shape = image_shape
+        self.image_size = image_size
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.drawPixmap(QRect(0, 0, self.image_shape, self.image_shape), QPixmap(self.image_path))
+        painter.drawPixmap(QRect(0, 0, self.image_size, self.image_size), QPixmap(self.image_path))
 
         if (use_sr):
             return
@@ -63,7 +63,7 @@ class Drawer(QWidget):
         self.update()
 
     def sizeHint(self):
-        return QSize(self.image_shape, self.image_shape)
+        return QSize(self.image_size, self.image_size)
 
     def resetPath(self):
         self.path = QPainterPath()
@@ -81,11 +81,21 @@ class InpaintApp(QWidget):
         self.cwd = os.getcwd()
 
         image_num = str(image_num).zfill(8)
-        image_path = self.cwd + "/val_256/Places365_val_{}.jpg".format(image_num)
+        self.image_path = self.cwd + "/val_256/Places365_val_{}.jpg".format(image_num)
+        img = Image.open(self.image_path)
+        self.img_size = img.height
+
+        if (use_sr):
+            ori_shape = (self.img_size,self.img_size)
+            downsampling_shape = ((int)(self.img_size/sr_rate), (int)(self.img_size/sr_rate))
+            img = img.resize(downsampling_shape)
+            img = img.resize(ori_shape)
+            self.image_path = self.cwd + "/downsample.jpg"
+            img.save(self.image_path)
 
         self.save_path = self.cwd + "/test.jpg"
-        self.open_and_save_img(image_path, self.save_path)
-        self.drawer = Drawer(self.save_path, self.img_shape, self)
+        self.open_and_save_img(self.image_path, self.save_path)
+        self.drawer = Drawer(self.save_path, self.img_size, self)
 
         self.setWindowTitle(self.title)
         self.setGeometry(200, 200, self.width, self.height)
@@ -97,7 +107,10 @@ class InpaintApp(QWidget):
         self.mask_transform = transforms.ToTensor()
         self.device = torch.device("cpu")
 
-        model_dict = torch.load(self.cwd + "/model/model_e330_i500.pth", map_location="cpu")
+        sr_mask_shape = (self.img_size,self.img_size)
+        self.sr_mask_gen = SRMaskGenerator(sr_mask_shape, self.device, sr_rate, torch.float)
+
+        model_dict = torch.load(self.cwd + "/model/model_e297_i500.pth", map_location="cpu")
         model = PartialConvUNet()
         model.load_state_dict(model_dict["model"])
         model = model.to(self.device)
@@ -110,16 +123,12 @@ class InpaintApp(QWidget):
     def open_and_save_img(self, path, dest):
         img = Image.open(path)
         img.save(dest)
-        self.img_shape = img.height
 
     def inpaint(self):
         if (use_sr):
-            sr_mask_shape = (1,1,self.img_shape,self.img_shape)
-            sr_mask_gen = SRMaskGenerator(sr_mask_shape, self.device, 1, sr_rate, torch.float)
-            mask = sr_mask_gen.get_sr_mask()
-
+            mask = self.sr_mask_gen.get_sr_mask()
         else:
-            mask = QImage(self.img_shape, self.img_shape, QImage.Format_RGB32)
+            mask = QImage(self.img_size, self.img_size, QImage.Format_RGB32)
             mask.fill(qRgb(255, 255, 255))
 
             painter = QPainter()
@@ -134,7 +143,7 @@ class InpaintApp(QWidget):
             mask = Image.open(self.cwd + "/mask.png")
             mask = self.mask_transform(mask.convert("RGB"))
 
-        gt_img = Image.open(self.save_path)
+        gt_img = Image.open(self.image_path)
         gt_img = self.img_transform(gt_img.convert("RGB"))
         img = gt_img * mask
 
@@ -158,7 +167,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--img", type=int, default=1)
     parser.add_argument('--super_resolution', '--sr', dest='use_sr', action='store_true')
-    parser.add_argument('--sr_rate', type=int, default=4)
+    parser.add_argument('--sr_rate', type=int, default=2)
     args = parser.parse_args()
 
     use_sr = args.use_sr

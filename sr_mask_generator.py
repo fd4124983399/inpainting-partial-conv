@@ -2,8 +2,9 @@ import torch
 
 class SRMaskGenerator:
     def __init__(self, shape, device, sr_rate, dtype=torch.float):
-        self.shape = shape
-        self.img_shape = shape[1]
+        self.shape = (1,)
+        self.shape += shape
+        self.img_size = shape[0]
         self.device = device
         self.sr_rate = sr_rate
         self.dtype = dtype
@@ -12,9 +13,9 @@ class SRMaskGenerator:
         sr_mask = torch.zeros(self.shape, dtype=self.dtype, device=self.device)
         index_h = 0
         index_v = 0
-        while (index_v < self.img_shape):
+        while (index_v < self.img_size):
             index_h = 0
-            while (index_h < self.img_shape):
+            while (index_h < self.img_size):
                 sr_mask[0][index_v][index_h] = 1
                 index_h += self.sr_rate
             index_v += self.sr_rate

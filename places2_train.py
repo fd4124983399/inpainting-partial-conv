@@ -36,8 +36,7 @@ class Places2Data (torch.utils.data.Dataset):
 		self.mask_transform = transforms.ToTensor()
 
 		if (use_sr):
-			sr_mask_shape = (1,)
-			sr_mask_shape += Image.open(self.img_paths[0]).size		
+			sr_mask_shape = Image.open(self.img_paths[0]).size		
 			sr_mask_gen = SRMaskGenerator(sr_mask_shape, torch.device("cpu"), sr_rate, torch.float)
 			self.sr_mask = sr_mask_gen.get_sr_mask()
 			self.num_masks = 1
