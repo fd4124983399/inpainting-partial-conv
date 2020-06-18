@@ -115,7 +115,11 @@ class InpaintApp(QWidget):
         sr_mask_shape = (self.img_size,self.img_size)
         self.sr_mask_gen = SRMaskGenerator(sr_mask_shape, self.device, sr_rate, torch.float)
 
-        model_dict = torch.load(self.cwd + "/model/model_e0_i500.pth", map_location="cpu")
+        if (use_sr):
+            model_dict = torch.load(self.cwd + "/model/sr_model_e0_i500.pth", map_location="cpu")
+        else:
+            model_dict = torch.load(self.cwd + "/model/irr_model_e0_i500.pth", map_location="cpu")
+
         model = PartialConvUNet()
         model.load_state_dict(model_dict["model"])
         model = model.to(self.device)

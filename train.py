@@ -167,10 +167,10 @@ if __name__ == '__main__':
 			if (i + 1) % args.save_interval == 0 or (i + 1) == iters_per_epoch:
 				filename = cwd + args.save_dir
 				if (use_sr):
-					filename += "/sr"
+					filename += "/sr/sr_"
 				else:
-					filename += "/irregular"
-				filename += "/model_e{}_i{}.pth".format(epoch, i + 1)
+					filename += "/irregular/irr_"
+				filename += "model_e{}_i{}.pth".format(epoch, i + 1)
 				state = {"model": model.state_dict(), "optimizer": optimizer.state_dict()}
 				torch.save(state, filename)
 
