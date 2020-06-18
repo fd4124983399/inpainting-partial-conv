@@ -1,8 +1,11 @@
 # Visual Studio cache directory
 .vs/
 val_256/
+val_128/
 data_256/
-mask/
+data_128/
+mask_256/
+mask_128/
 training_logs/
 __pycache__/
 model/
