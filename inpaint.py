@@ -88,12 +88,17 @@ class InpaintApp(QWidget):
         if (use_sr):
             ori_shape = (self.img_size,self.img_size)
             downsampling_shape = ((int)(self.img_size/sr_rate), (int)(self.img_size/sr_rate))
-            img = img.resize(downsampling_shape)
-            img = img.resize(ori_shape)
-            self.image_path = self.cwd + "/downsample.jpg"
-            img.save(self.image_path)
-
-        self.save_path = self.cwd + "/test.jpg"
+            down_img = Image.new('RGB', downsampling_shape)
+            for h in range (down_img.height):
+                for w in range (down_img.width):
+                    desired_pixel = img.getpixel((w * sr_rate, h * sr_rate))
+                    down_img.putpixel((w, h), desired_pixel)
+                   
+            down_img = down_img.resize(ori_shape, Image.NEAREST)
+            self.image_path = self.cwd + "/downsample.png"
+            down_img.save(self.image_path)
+                    
+        self.save_path = self.cwd + "/test.png"
         self.open_and_save_img(self.image_path, self.save_path)
         self.drawer = Drawer(self.save_path, self.img_size, self)
 
@@ -159,7 +164,7 @@ class InpaintApp(QWidget):
         # unnormalize the image and output
         output = mask * img + (1 - mask) * output
         grid = make_grid(unnormalize(output))
-        save_image(grid, "test.jpg")
+        save_image(grid, "test.png")
 
         self.drawer.resetPath()
  
