@@ -29,9 +29,9 @@ def requires_grad(param):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--train_path", type=str, default="/data_256/")
-	parser.add_argument("--mask_path", type=str, default="/mask/")
-	parser.add_argument("--val_path", type=str, default="/val_256/")
+	parser.add_argument("--train_path", type=str, default="/data_128/")
+	parser.add_argument("--mask_path", type=str, default="/mask_128/")
+	parser.add_argument("--val_path", type=str, default="/val_128/")
 
 	parser.add_argument("--log_dir", type=str, default="/training_logs/")
 	parser.add_argument("--save_dir", type=str, default="/model/")
