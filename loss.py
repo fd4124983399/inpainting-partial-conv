@@ -63,12 +63,65 @@ class VGG16Extractor(nn.Module):
 			for param in getattr(self, 'max_pooling{:d}'.format(i)).parameters():
 				param.requires_grad = False
 
+        ########################################
+		#self.max_pooling4 = vgg16.features[17:24]
+		#self.max_pooling5 = vgg16.features[24:31]
+
+		#for i in range(1, 6):
+		#	for param in getattr(self, 'max_pooling{:d}'.format(i)).parameters():
+		#		param.requires_grad = False
+        ########################################
+
 	# feature extractor at each of the first three pooling layers
 	def forward(self, image):
 		results = [image]
 		for i in range(1, 4):
 			func = getattr(self, 'max_pooling{:d}'.format(i))
 			results.append(func(results[-1]))
+
+        ########################################
+		#for i in range(1, 6):
+		#	func = getattr(self, 'max_pooling{:d}'.format(i))
+		#	results.append(func(results[-1]))
+        ########################################
+
+		return results[1:]
+
+class VGG19Extractor(nn.Module):
+	def __init__(self):
+		super().__init__()
+		vgg19 = models.vgg16(pretrained=True)
+		self.max_pooling1 = vgg19.features[:5]
+		self.max_pooling2 = vgg19.features[5:10]
+		self.max_pooling3 = vgg19.features[10:19]
+
+
+		#for i in range(1, 4):
+		#	for param in getattr(self, 'max_pooling{:d}'.format(i)).parameters():
+		#		param.requires_grad = False
+
+        ########################################
+		self.max_pooling4 = vgg19.features[19:28]
+		self.max_pooling5 = vgg19.features[28:37]
+
+		for i in range(1, 6):
+			for param in getattr(self, 'max_pooling{:d}'.format(i)).parameters():
+				param.requires_grad = False
+        ########################################
+
+	# feature extractor at each of the first three pooling layers
+	def forward(self, image):
+		results = [image]
+		#for i in range(1, 4):
+		#	func = getattr(self, 'max_pooling{:d}'.format(i))
+		#	results.append(func(results[-1]))
+
+        ########################################
+		for i in range(1, 6):
+			func = getattr(self, 'max_pooling{:d}'.format(i))
+			results.append(func(results[-1]))
+        ########################################
+
 		return results[1:]
 
 
