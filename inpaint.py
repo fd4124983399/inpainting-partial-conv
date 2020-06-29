@@ -94,7 +94,7 @@ class InpaintApp(QWidget):
                     desired_pixel = img.getpixel((w * sr_rate, h * sr_rate))
                     down_img.putpixel((w, h), desired_pixel)
                    
-            down_img = down_img.resize(ori_shape, Image.NEAREST)
+            down_img = down_img.resize(ori_shape)
             self.image_path = self.cwd + "/downsample.png"
             down_img.save(self.image_path)
                     
